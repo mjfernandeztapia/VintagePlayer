@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deutscher Schallplattenspieler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="gramophone-container">
+        <div class="header">
+            <h1>Deutscher Musikspieler</h1>
+            <p>Klassische Deutsche Musik · Vintage-Stil</p>
+        </div>
+
+        <div class="player-body">
+            <div class="turntable-section">
+                <div class="vinyl-container">
+                    <div class="vinyl" id="vinyl">
+                        <div class="vinyl-label">
+                            <div class="vinyl-label-text">DEUTSCHE<br>MUSIK<br>★</div>
+                        </div>
+                        <div class="vinyl-hole"></div>
+                    </div>
+                    <div class="tonearm"></div>
+                </div>
+
+                <div class="playlist-section">
+                    <h2 class="playlist-title">Musiksammlung</h2>
+                    <div class="song-list" id="songList"></div>
+                </div>
+            </div>
+
+            <div class="now-playing" id="nowPlaying" style="display: none;">
+                <div class="now-playing-label">Jetzt läuft</div>
+                <div class="now-playing-title" id="currentTitle">—</div>
+                <div class="now-playing-artist" id="currentArtist">—</div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="prevBtn" title="Vorheriger">⏮</button>
+                <button class="control-btn play-pause" id="playBtn" title="Abspielen/Pause">▶</button>
+                <button class="control-btn" id="nextBtn" title="Nächster">⏭</button>
+            </div>
+
+            <div class="volume-control">
+                <span class="volume-icon">🔊</span>
+                <input type="range" min="0" max="100" value="70" class="volume-slider" id="volumeSlider">
+            </div>
+
+            <div class="custom-url-section">
+                <h3 class="custom-url-title">Eigenes Lied hinzufügen</h3>
+                <div class="url-input-group">
+                    <input type="text" class="url-input" id="titleInput" placeholder="Titel des Liedes">
+                    <input type="text" class="url-input" id="artistInput" placeholder="Künstler">
+                </div>
+                <div class="url-input-group">
+                    <input type="text" class="url-input" id="urlInput" placeholder="YouTube URL oder Audio URL">
+                    <button class="add-btn" id="addBtn">Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
