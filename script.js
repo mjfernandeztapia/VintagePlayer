@@ -24,6 +24,8 @@ const defaultSongs = [
 let playlist = [...defaultSongs];
 let currentIndex = 0;
 let isPlaying = false;
+let ytPlayer = null;
+let ytApiReady = false;
 
 // ==================== DOM ELEMENTS ====================
 const audioPlayer = document.getElementById('audioPlayer');
@@ -52,6 +54,25 @@ function getYouTubeID(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// ==================== YOUTUBE API HELPERS ====================
+
+function loadYouTubeAPI() {
+    if (window.YT && window.YT.Player) {
+        ytApiReady = true;
+        return;
+    }
+
+    if (document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) return;
+
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+
+    window.onYouTubeIframeAPIReady = function() {
+        ytApiReady = true;
+    };
 }
 
 // ==================== PLAYLIST FUNCTIONS ====================
@@ -94,21 +115,59 @@ function playSong(index) {
     const youtubeID = getYouTubeID(song.url);
     
     if (youtubeID) {
-        // YouTube video - show info and open in new tab
-        nowPlaying.style.display = 'block';
-        currentTitle.textContent = song.title;
-        currentArtist.textContent = song.artist;
-        
-        isPlaying = true;
-        vinyl.classList.add('spinning');
-        playBtn.textContent = '⏸';
-        
-        // Open YouTube in new tab
-        window.open(song.url, '_blank');
-        
-        renderPlaylist();
+        // YouTube URL: play audio via hidden YouTube IFrame player (no visible video)
+        // Pause/clear the HTML audio player
+        audioPlayer.pause();
+        audioPlayer.src = '';
+
+        // Ensure API is loaded
+        loadYouTubeAPI();
+
+        const startYT = () => {
+            if (!ytPlayer) {
+                ytPlayer = new YT.Player('ytPlayer', {
+                    height: '0',
+                    width: '0',
+                    videoId: youtubeID,
+                    playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0 },
+                    events: {
+                        onReady: (e) => { e.target.playVideo(); },
+                        onStateChange: (ev) => {
+                            if (ev.data === YT.PlayerState.ENDED) playNext();
+                        }
+                    }
+                });
+            } else {
+                ytPlayer.loadVideoById(youtubeID);
+                if (ytPlayer.playVideo) ytPlayer.playVideo();
+            }
+
+            isPlaying = true;
+            vinyl.classList.add('spinning');
+            playBtn.textContent = '⏸';
+
+            nowPlaying.style.display = 'block';
+            currentTitle.textContent = song.title;
+            currentArtist.textContent = song.artist;
+
+            renderPlaylist();
+        };
+
+        if (ytApiReady) {
+            startYT();
+        } else {
+            const wait = setInterval(() => {
+                if (ytApiReady) {
+                    clearInterval(wait);
+                    startYT();
+                }
+            }, 200);
+        }
     } else {
         // Direct audio URL - play in audio element
+        // If a YT player was playing, stop it
+        try { if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo(); } catch (e) { }
+
         audioPlayer.src = song.url;
         audioPlayer.play().then(() => {
             isPlaying = true;
@@ -132,6 +191,8 @@ function playSong(index) {
  */
 function togglePlayPause() {
     if (isPlaying) {
+        // Pause both players if active
+        try { if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo(); } catch (e) { }
         audioPlayer.pause();
         isPlaying = false;
         vinyl.classList.remove('spinning');
@@ -196,7 +257,9 @@ function addCustomSong() {
  * @param {Event} e - Input event from volume slider
  */
 function updateVolume(e) {
-    audioPlayer.volume = e.target.value / 100;
+    const vol = e.target.value / 100;
+    audioPlayer.volume = vol;
+    try { if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(e.target.value); } catch (e) { }
 }
 
 // ==================== EVENT LISTENERS ====================
